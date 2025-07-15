@@ -4,6 +4,13 @@
 
 > **Projeto Privado** desenvolvido por **Marco Martinelli** e **João Mateus** no **PUCtec** (Pontifícia Universidade Católica - Tecnologia).
 
+## 📚 Documentação
+
+- **[🎨 Design e UX](docs/DESIGN.md)** - Interface visual e experiência do usuário
+- **[⚙️ Funcionalidades](docs/FEATURES.md)** - Recursos detalhados do sistema
+- **[🏗️ Arquitetura](docs/ARCHITECTURE.md)** - Estrutura técnica completa
+- **[📦 Instalação](docs/INSTALLATION.md)** - Guia completo de instalação
+
 ## 🎯 O que é o Bebrew
 
 O Bebrew foi desenvolvido para resolver os principais desafios da **produção artesanal de bebidas fermentadas**:
@@ -59,14 +66,7 @@ bebrew_mvp/
 └── main.py                # Aplicação principal
 ```
 
-## 📚 Documentação Adicional
 
-- **[🎨 Design e UX](DESIGN.md)** - Interface visual e experiência do usuário
-- **[⚙️ Funcionalidades](FEATURES.md)** - Recursos detalhados do sistema
-- **[🏗️ Arquitetura](ARCHITECTURE.md)** - Estrutura técnica completa
-- **[📦 Instalação](INSTALLATION.md)** - Guia completo de instalação
-- **[🤝 Contribuindo](CONTRIBUTING.md)** - Como contribuir para o projeto
-- **[🗺️ Roadmap](ROADMAP.md)** - Planos futuros e melhorias
 
 ## 🔧 Estado Atual
 
@@ -100,7 +100,7 @@ Este é um **projeto privado** desenvolvido como parte de estudos e pesquisa em 
 ### **Direitos Autorais**
 © 2024 Marco Martinelli, João Mateus e PUCtec. Todos os direitos reservados.
 
-## 📞 Suporte e Contato
+## Suporte e Contato
 
 ### **Para Desenvolvedores Autorizados**
 - **Issues Internas**: Reporte bugs ou solicite funcionalidades
