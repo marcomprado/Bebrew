@@ -96,7 +96,7 @@ class BaseView(ABC):
     def create_button(self, parent: Union[ctk.CTkFrame, tk.Widget], text: str, command: Callable, 
                      style: str = 'primary', icon: str = "", **kwargs) -> ctk.CTkButton:
         """Cria um botão moderno com outline"""
-        # Configurações de estilo
+        # Configurações de estilo - todos os botões com outline apenas
         styles = {
             'primary': {
                 'fg_color': 'transparent',
@@ -123,16 +123,16 @@ class BaseView(ABC):
                 'hover_color': self.colors['warning']
             },
             'solid_primary': {
-                'fg_color': self.colors['accent_orange'],
+                'fg_color': 'transparent',
                 'border_color': self.colors['accent_orange'],
-                'text_color': self.colors['text_primary'],
-                'hover_color': '#ff5722'
+                'text_color': self.colors['accent_orange'],
+                'hover_color': self.colors['accent_orange']
             },
             'solid_secondary': {
-                'fg_color': self.colors['accent_blue'],
+                'fg_color': 'transparent',
                 'border_color': self.colors['accent_blue'],
-                'text_color': self.colors['text_primary'],
-                'hover_color': '#339af0'
+                'text_color': self.colors['accent_blue'],
+                'hover_color': self.colors['accent_blue']
             }
         }
         
@@ -155,32 +155,27 @@ class BaseView(ABC):
             **kwargs
         )
         
-        # Efeito hover customizado para botões outline
-        if style in ['primary', 'secondary', 'success', 'warning']:
-            def on_enter(e):
-                button.configure(fg_color=config['hover_color'], text_color=self.colors['text_primary'])
-            
-            def on_leave(e):
-                button.configure(fg_color='transparent', text_color=config['text_color'])
-            
-            button.bind("<Enter>", on_enter)
-            button.bind("<Leave>", on_leave)
+        # Efeito hover customizado para todos os botões (todos são outline agora)
+        def on_enter(e):
+            button.configure(fg_color=config['hover_color'], text_color=self.colors['text_primary'])
+        
+        def on_leave(e):
+            button.configure(fg_color='transparent', text_color=config['text_color'])
+        
+        button.bind("<Enter>", on_enter)
+        button.bind("<Leave>", on_leave)
         
         return button
         
     def create_card(self, parent: Union[ctk.CTkFrame, tk.Widget], title: str = "", padding: int = 20, **kwargs) -> ctk.CTkFrame:
         """Cria um card moderno com sombra"""
-        # Container com padding para sombra
-        shadow_container = ctk.CTkFrame(parent, fg_color='transparent')
-        
-        # Card principal
+        # Card principal (retornamos diretamente o card)
         card = ctk.CTkFrame(
-            shadow_container,
+            parent,
             fg_color=self.colors['bg_secondary'],
             corner_radius=12,
             **kwargs
         )
-        card.pack(fill='both', expand=True, padx=2, pady=2)
         
         # Adicionar título se fornecido
         if title:
@@ -327,6 +322,10 @@ class BaseView(ABC):
             self.create_frame()
             self.create_widgets()
             self.is_created = True
+        
+        # Garantir que o frame seja exibido
+        if self.frame:
+            self.frame.pack(fill='both', expand=True)
         
         # Atualizar dados se necessário
         self.on_show(**kwargs)

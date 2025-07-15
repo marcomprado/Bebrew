@@ -4,6 +4,7 @@ from typing import Optional, Dict, List
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from datetime import datetime
+from util.mock_data_loader import mock_loader
 
 class DashboardView(BaseView):
     """View principal do dashboard do Bebrew"""
@@ -310,24 +311,21 @@ class DashboardView(BaseView):
         
     def update_stats(self):
         """Atualiza as estatísticas do dashboard"""
+        # Obter estatísticas dos dados mock
+        stats = mock_loader.get_estatisticas()
+        
         # Produções ativas
-        active_count = len(self.brew_controller.producoes_ativas)
-        self.update_stat_card("Produções Ativas", str(active_count))
+        self.update_stat_card("Produções Ativas", str(stats.get("producoes_ativas", 0)))
         
         # Receitas salvas
-        recipe_count = len(self.recipe_controller.receitas)
-        self.update_stat_card("Receitas Salvas", str(recipe_count))
+        self.update_stat_card("Receitas Salvas", str(stats.get("total_receitas", 0)))
         
         # ABV médio
-        stats = self.recipe_controller.obter_estatisticas_receitas()
         abv_medio = f"{stats.get('abv_medio', 0):.1f}%"
         self.update_stat_card("ABV Médio", abv_medio)
         
         # Última produção
-        last_production = "Nenhuma"
-        if self.brew_controller.producao_atual:
-            last_production = self.brew_controller.producao_atual.lote
-        self.update_stat_card("Última Produção", last_production)
+        self.update_stat_card("Última Produção", stats.get("ultima_producao", "Nenhuma"))
         
     def update_stat_card(self, label: str, new_value: str):
         """Atualiza o valor de um card de estatística"""
@@ -347,8 +345,8 @@ class DashboardView(BaseView):
         for widget in self.production_list.winfo_children():
             widget.destroy()
             
-        # Obter produções ativas
-        productions = self.brew_controller.listar_producoes_ativas()
+        # Obter produções ativas dos dados mock
+        productions = mock_loader.get_producoes_ativas()
         
         if not productions:
             no_productions_label = self.create_label(
@@ -359,11 +357,6 @@ class DashboardView(BaseView):
             no_productions_label.pack(pady=40)
         else:
             for production in productions:
-                # Adicionar nome da receita aos dados
-                if production.get('lote') in self.brew_controller.producoes_ativas:
-                    producao_obj = self.brew_controller.producoes_ativas[production.get('lote')]
-                    production['receita_nome'] = producao_obj.receita.nome
-                    
                 self.create_production_item(self.production_list, production)
                 
     def update_recent_recipes(self):
@@ -372,8 +365,8 @@ class DashboardView(BaseView):
         for widget in self.recipe_list.winfo_children():
             widget.destroy()
             
-        # Obter receitas recentes (últimas 5)
-        recipes = self.recipe_controller.listar_receitas("data")[:5]
+        # Obter receitas dos dados mock (últimas 5)
+        recipes = mock_loader.get_receitas()[:5]
         
         if not recipes:
             no_recipes_label = self.create_label(
@@ -384,14 +377,7 @@ class DashboardView(BaseView):
             no_recipes_label.pack(pady=40)
         else:
             for recipe in recipes:
-                recipe_data = {
-                    'id': recipe.id,
-                    'nome': recipe.nome,
-                    'tipo': recipe.tipo,
-                    'volume': recipe.volume,
-                    'abv': recipe.abv or 0
-                }
-                self.create_recipe_item(self.recipe_list, recipe_data)
+                self.create_recipe_item(self.recipe_list, recipe)
                 
     def on_show(self, **kwargs):
         """Callback chamado quando a view é exibida"""

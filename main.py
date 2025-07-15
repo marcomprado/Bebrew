@@ -16,6 +16,13 @@ from controls.recipe_controller import RecipeController
 
 # Importar views
 from view.dashboard_view import DashboardView
+from view.recipe_view import RecipeView
+from view.production_view import ProductionView
+from view.history_view import HistoryView
+from view.settings_view import SettingsView
+from view.new_recipe_view import NewRecipeView
+from view.new_production_view import NewProductionView
+from view.ingredients_view import IngredientsView
 from view.base_view import NavigationProtocol
 
 # Configuração inicial do CustomTkinter
@@ -37,6 +44,7 @@ class BebrewNavigator:
         self.app = app_instance
         self.current_view: Optional[str] = None
         self.view_history: List[str] = []
+        self.forward_history: List[str] = []  # Histórico para navegação "avançar"
         self.views: Dict[str, Any] = {}
         
         # Definir o grafo de navegação
@@ -56,7 +64,7 @@ class BebrewNavigator:
                 name='nova_receita',
                 title='Nova Receita',
                 icon='📝',
-                view_class=None,  # Será implementada posteriormente
+                view_class=NewRecipeView,
                 connections=['editor_receita', 'dashboard']
             ),
             'editor_receita': ViewConfig(
@@ -70,14 +78,14 @@ class BebrewNavigator:
                 name='nova_producao',
                 title='Nova Produção',
                 icon='🍺',
-                view_class=None,
+                view_class=NewProductionView,
                 connections=['monitoramento', 'dashboard']
             ),
             'monitoramento': ViewConfig(
                 name='monitoramento',
                 title='Monitoramento',
                 icon='📊',
-                view_class=None,
+                view_class=ProductionView,
                 connections=['visualizador_producao', 'dashboard']
             ),
             'visualizador_producao': ViewConfig(
@@ -91,28 +99,28 @@ class BebrewNavigator:
                 name='historico',
                 title='Histórico',
                 icon='📚',
-                view_class=None,
+                view_class=HistoryView,
                 connections=['visualizador_producao', 'dashboard']
             ),
             'receitas': ViewConfig(
                 name='receitas',
                 title='Receitas',
                 icon='📖',
-                view_class=None,
+                view_class=RecipeView,
                 connections=['editor_receita', 'nova_producao', 'dashboard']
             ),
             'ingredientes': ViewConfig(
                 name='ingredientes',
                 title='Ingredientes',
                 icon='🧪',
-                view_class=None,
+                view_class=IngredientsView,
                 connections=['editor_receita', 'dashboard']
             ),
             'configuracoes': ViewConfig(
                 name='configuracoes',
                 title='Configurações',
                 icon='⚙️',
-                view_class=None,
+                view_class=SettingsView,
                 connections=['dashboard']
             )
         }
@@ -122,7 +130,7 @@ class BebrewNavigator:
         # Com menu lateral, sempre é possível navegar
         return target_view in self.view_configs
         
-    def navigate_to(self, view_name: str, **kwargs):
+    def navigate_to(self, view_name: str, from_history: bool = False, **kwargs):
         """Navega para uma view específica"""
         if view_name not in self.view_configs:
             print(f"View '{view_name}' não encontrada")
@@ -132,9 +140,11 @@ class BebrewNavigator:
         if self.current_view and self.current_view in self.views:
             self.views[self.current_view].hide()
             
-        # Adicionar à história se não é a mesma view
-        if self.current_view and self.current_view != view_name:
+        # Adicionar à história se não é a mesma view e não é navegação do histórico
+        if self.current_view and self.current_view != view_name and not from_history:
             self.view_history.append(self.current_view)
+            # Limpar histórico de "avançar" quando navegamos normalmente
+            self.forward_history.clear()
             
         # Criar view se não existe
         if view_name not in self.views:
@@ -157,6 +167,7 @@ class BebrewNavigator:
         
         # Atualizar sidebar
         self.app.update_sidebar_active(view_name)
+        self.app.update_navigation_buttons()
         
         return True
         
@@ -164,10 +175,14 @@ class BebrewNavigator:
         """Volta para a view anterior"""
         if not self.view_history:
             # Se não há histórico, vai para o dashboard
-            self.navigate_to('dashboard')
+            self.navigate_to('dashboard', from_history=True)
             return
             
         previous_view = self.view_history.pop()
+        
+        # Adicionar view atual ao histórico de "avançar"
+        if self.current_view:
+            self.forward_history.append(self.current_view)
         
         # Esconder view atual
         if self.current_view and self.current_view in self.views:
@@ -180,6 +195,39 @@ class BebrewNavigator:
             
         # Atualizar sidebar
         self.app.update_sidebar_active(previous_view)
+        self.app.update_navigation_buttons()
+        
+    def go_forward(self):
+        """Avança para a próxima view no histórico"""
+        if not self.forward_history:
+            return
+            
+        next_view = self.forward_history.pop()
+        
+        # Adicionar view atual ao histórico de "voltar"
+        if self.current_view:
+            self.view_history.append(self.current_view)
+        
+        # Esconder view atual
+        if self.current_view and self.current_view in self.views:
+            self.views[self.current_view].hide()
+            
+        # Mostrar próxima view
+        self.current_view = next_view
+        if next_view in self.views:
+            self.views[next_view].show()
+            
+        # Atualizar sidebar
+        self.app.update_sidebar_active(next_view)
+        self.app.update_navigation_buttons()
+        
+    def can_go_back(self) -> bool:
+        """Verifica se é possível voltar"""
+        return len(self.view_history) > 0
+        
+    def can_go_forward(self) -> bool:
+        """Verifica se é possível avançar"""
+        return len(self.forward_history) > 0
         
     def show_placeholder(self, view_name: str):
         """Mostra uma tela placeholder para views não implementadas"""
@@ -217,9 +265,9 @@ class BebrewNavigator:
         # Salvar referência temporária
         self.views[view_name] = type('TempView', (), {
             'frame': temp_frame,
-            'hide': lambda: temp_frame.pack_forget(),
-            'show': lambda **kwargs: temp_frame.pack(fill='both', expand=True),
-            'destroy': lambda: temp_frame.destroy()
+            'hide': lambda self=None: temp_frame.pack_forget(),
+            'show': lambda self=None, **kwargs: temp_frame.pack(fill='both', expand=True),
+            'destroy': lambda self=None: temp_frame.destroy()
         })()
         
         self.current_view = view_name
@@ -241,6 +289,7 @@ class BebrewApp:
             'accent_blue': '#4dabf7',
             'text_primary': '#ffffff',
             'text_secondary': '#b8bfc6',
+            'text_muted': '#7d8590',
             'border': '#404654'
         }
         
@@ -271,6 +320,23 @@ class BebrewApp:
         
         # Configurar protocolo de fechamento
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
+        # Configurar atalhos de teclado
+        self.setup_keyboard_shortcuts()
+        
+    def setup_keyboard_shortcuts(self):
+        """Configura atalhos de teclado para navegação"""
+        # Alt + Seta Esquerda = Voltar
+        self.root.bind('<Alt-Left>', lambda e: self.navigator.go_back())
+        
+        # Alt + Seta Direita = Avançar
+        self.root.bind('<Alt-Right>', lambda e: self.navigator.go_forward())
+        
+        # Ctrl + Seta Esquerda = Voltar (alternativo)
+        self.root.bind('<Control-Left>', lambda e: self.navigator.go_back())
+        
+        # Ctrl + Seta Direita = Avançar (alternativo)
+        self.root.bind('<Control-Right>', lambda e: self.navigator.go_forward())
         
     def create_main_layout(self):
         """Cria o layout principal com sidebar e área de conteúdo"""
@@ -318,6 +384,47 @@ class BebrewApp:
             text_color=self.colors['text_secondary']
         )
         subtitle_label.pack(anchor='w')
+        
+        # Botões de navegação
+        nav_buttons_frame = ctk.CTkFrame(self.sidebar_frame, fg_color='transparent', height=50)
+        nav_buttons_frame.pack(fill='x', padx=20, pady=(10, 0))
+        nav_buttons_frame.pack_propagate(False)
+        
+        # Container para centralizar os botões
+        button_container = ctk.CTkFrame(nav_buttons_frame, fg_color='transparent')
+        button_container.pack(expand=True)
+        
+        # Botão voltar
+        self.back_button = ctk.CTkButton(
+            button_container,
+            text="← Voltar",
+            command=self.navigator.go_back,
+            fg_color='transparent',
+            hover_color=self.colors['bg_tertiary'],
+            text_color=self.colors['text_secondary'],
+            font=ctk.CTkFont(size=12),
+            corner_radius=6,
+            height=35,
+            width=80,
+            state='disabled'
+        )
+        self.back_button.pack(side='left', padx=(0, 5))
+        
+        # Botão avançar
+        self.forward_button = ctk.CTkButton(
+            button_container,
+            text="Avançar →",
+            command=self.navigator.go_forward,
+            fg_color='transparent',
+            hover_color=self.colors['bg_tertiary'],
+            text_color=self.colors['text_secondary'],
+            font=ctk.CTkFont(size=12),
+            corner_radius=6,
+            height=35,
+            width=80,
+            state='disabled'
+        )
+        self.forward_button.pack(side='left', padx=(5, 0))
         
         # Separador
         separator = ctk.CTkFrame(self.sidebar_frame, fg_color=self.colors['border'], height=1)
@@ -375,10 +482,14 @@ class BebrewApp:
         
         # Botões
         for view_name, label, icon in items:
+            # Função para criar command com closure correto
+            def make_command(view):
+                return lambda: self.navigator.navigate_to(view)
+            
             btn = ctk.CTkButton(
                 parent,
                 text=f"{icon}  {label}",
-                command=lambda v=view_name: self.navigator.navigate_to(v),
+                command=make_command(view_name),
                 fg_color='transparent',
                 hover_color=self.colors['bg_tertiary'],
                 text_color=self.colors['text_secondary'],
@@ -411,6 +522,32 @@ class BebrewApp:
                 if hasattr(btn, '_indicator'):
                     btn._indicator.destroy()
                     delattr(btn, '_indicator')
+                    
+    def update_navigation_buttons(self):
+        """Atualiza o estado dos botões de navegação"""
+        # Botão voltar
+        if self.navigator.can_go_back():
+            self.back_button.configure(
+                state='normal',
+                text_color=self.colors['text_primary']
+            )
+        else:
+            self.back_button.configure(
+                state='disabled',
+                text_color=self.colors['text_muted']
+            )
+            
+        # Botão avançar
+        if self.navigator.can_go_forward():
+            self.forward_button.configure(
+                state='normal',
+                text_color=self.colors['text_primary']
+            )
+        else:
+            self.forward_button.configure(
+                state='disabled',
+                text_color=self.colors['text_muted']
+            )
         
     def center_window(self):
         """Centraliza a janela na tela"""
