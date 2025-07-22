@@ -29,10 +29,18 @@ O Bebrew foi desenvolvido para resolver os principais desafios da **produção a
 
 ## 🛠️ Tecnologias Utilizadas
 
+### Frontend (Interface Desktop)
 - **Python 3.8+**: Linguagem principal
 - **CustomTkinter**: Interface gráfica moderna
 - **Matplotlib**: Visualizações e gráficos
 - **NumPy**: Processamento de dados numéricos
+
+### Backend (API)
+- **FastAPI**: Framework web moderno e rápido
+- **OpenAI**: Integração com IA para análise e otimização
+- **Firebase**: Autenticação e banco de dados em tempo real
+- **Pydantic**: Validação de dados e configurações
+- **Loguru**: Sistema de logging estruturado
 
 ## 🚀 Instalação Rápida
 
@@ -51,9 +59,37 @@ cd bebrew_mvp
 # Instalar dependências
 pip install -r requirements.txt
 
-# Executar aplicação
+# Executar aplicação (Frontend)
 python main.py
+
+# Executar API (Backend) - em outro terminal
+python run_api.py
 ```
+
+### Configuração do Backend
+
+Para usar as funcionalidades de IA e Firebase:
+
+1. **Configure as variáveis de ambiente**:
+   ```bash
+   # Copie o arquivo de exemplo
+   cp .env.example .env
+   
+   # Edite o arquivo .env com suas credenciais
+   # - OpenAI API Key
+   # - Firebase Project ID e credenciais
+   ```
+
+2. **Instale as dependências adicionais**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Acesse a documentação da API**:
+   - Swagger UI: http://localhost:8000/docs
+   - ReDoc: http://localhost:8000/redoc
+
+> 📚 **Documentação completa do Backend**: Veja [docs/BACKEND.md](docs/BACKEND.md)
 
 ## 📁 Arquitetura
 
@@ -61,21 +97,39 @@ python main.py
 bebrew_mvp/
 ├── models/                 # Modelos de dados
 ├── controls/               # Controladores de negócio
-├── view/                   # Interface do usuário
+├── view/                   # Interface do usuário (Frontend)
 ├── util/                   # Utilitários e cálculos
-└── main.py                # Aplicação principal
+├── backend/                # Backend com API e serviços
+│   ├── api/               # API FastAPI
+│   ├── services/          # Serviços (IA, Firebase)
+│   └── config/            # Configurações
+├── tests/                 # Testes automatizados
+├── logs/                  # Logs da aplicação
+├── docs/                  # Documentação
+├── main.py                # Aplicação principal (Frontend)
+└── run_api.py             # Script para iniciar API
 ```
 
 
 
 ## 🔧 Estado Atual
 
+### Frontend (Interface Desktop)
 - ✅ **Modelos de dados** completos
 - ✅ **Interface moderna** com tema escuro
 - ✅ **Sistema de navegação** intuitivo
 - ✅ **Calculadora de ABV** com múltiplas fórmulas
 - ✅ **Dashboard** com estatísticas em tempo real
 - 🔄 **Monitoramento** em tempo real (em desenvolvimento)
+
+### Backend (API)
+- ✅ **API RESTful** com FastAPI
+- ✅ **Integração com OpenAI** para análise de receitas
+- ✅ **Autenticação Firebase** com JWT
+- ✅ **Armazenamento Firestore** para dados
+- ✅ **Sistema de logging** estruturado
+- ✅ **Documentação automática** (Swagger/ReDoc)
+- 🔄 **Testes automatizados** (em desenvolvimento)
 
 ## 👥 Autores e Desenvolvimento
 
